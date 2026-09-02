@@ -118,14 +118,16 @@ services.forEach((s,idx)=>{
 });
 
 /* ---------------- Portfolio data ----------------
-   NOTE: Real, live projects go first. "Sample" cards are clearly
-   labeled placeholders for work that hasn't started yet — swap
-   their copy/tag once the real project kicks off. */
+   Real, live projects go first. The last two are concept builds —
+   shown as "Concept" work (not fabricated client results) so the
+   grid doesn't look empty/broken while real case studies are added
+   over time. Swap their copy/tag/metrics for real numbers once a
+   client project actually ships. */
 const folio = [
-  {tag:'Personal Brand', title:'Creator Growth System', desc:'Content and growth framework that scaled a niche page past 200K+ views.', m1:['Total Views','220K+'], m2:['Follower Growth','+310%'], grad:'linear-gradient(135deg,#251034,#04101f)'},
+  {tag:'Personal Brand', title:'Creator Growth System', desc:'Content and growth framework that scaled a niche page past 200K+ views.', m1:['Total Views','220K+'], m2:['Follower Growth','+310%'], grad:'linear-gradient(135deg,#04304a,#04101f)'},
   {tag:'Web Platform', title:'Snowbrik Digital — Brand OS', desc:'The identity, automation stack and site system behind Snowbrik Digital itself.', m1:['Load Time','0.8s'], m2:['Lighthouse','96'], grad:'linear-gradient(135deg,#04304a,#04101f)'},
-  {tag:'Sample · Coming Soon', title:'E-Commerce Growth System (Sample)', desc:'A sample case study — this is how we\'d structure brand, storefront and social funnel for a retail client.', m1:['Sample Metric','—'], m2:['Sample Metric','—'], grad:'linear-gradient(135deg,#0b2340,#04101f)'},
-  {tag:'Sample · Coming Soon', title:'Content Engine (Sample)', desc:'A sample case study — a packaged content and outreach system designed to generate qualified leads.', m1:['Sample Metric','—'], m2:['Sample Metric','—'], grad:'linear-gradient(135deg,#062b2a,#04101f)'},
+  {tag:'Concept', title:'E-Commerce Growth System', desc:'A concept build showing how we\'d structure brand, storefront and social funnel for a retail client.', m1:['Scope','Full Funnel'], m2:['Type','Concept Build'], grad:'linear-gradient(135deg,#04304a,#04101f)'},
+  {tag:'Concept', title:'Content Engine', desc:'A concept build for a packaged content and outreach system designed to generate qualified leads.', m1:['Scope','Content + Outreach'], m2:['Type','Concept Build'], grad:'linear-gradient(135deg,#04304a,#04101f)'},
 ];
 const folioGrid = document.getElementById('folioGrid');
 folio.forEach(f=>{
@@ -254,16 +256,49 @@ function resetTestiTimer(){
 }
 resetTestiTimer();
 
-/* ---------------- Contact form ---------------- */
-document.getElementById('contactForm').addEventListener('submit', function(e){
+/* ---------------- Contact form ----------------
+   IMPORTANT: This form currently sends via FormSubmit's AJAX endpoint
+   (https://formsubmit.co/ajax/snowbrikdigital@gmail.com). That works
+   the first time an email address is used with FormSubmit, but it
+   requires a ONE-TIME confirmation: FormSubmit emails
+   snowbrikdigital@gmail.com an "activate your form" link the first
+   time a submission comes through, and no messages deliver until that
+   link is clicked. Go check that inbox (including spam) after your
+   first test submission and click "Activate Form".
+   The old version of this form just tried to open the visitor's own
+   email app via a mailto: link — which silently does nothing on most
+   phones/browsers if no default mail app is configured, which is very
+   likely why it looked "not working". */
+const contactForm = document.getElementById('contactForm');
+const submitBtn = document.getElementById('contactSubmitBtn');
+const formSuccess = document.getElementById('formSuccess');
+const formError = document.getElementById('formError');
+const FORM_ENDPOINT = 'https://formsubmit.co/ajax/snowbrikdigital@gmail.com';
+
+contactForm.addEventListener('submit', async function(e){
   e.preventDefault();
+  formSuccess.style.display = 'none';
+  formError.style.display = 'none';
+
   const fd = new FormData(this);
-  const subject = encodeURIComponent('New inquiry from ' + (fd.get('name')||'website'));
-  const body = encodeURIComponent(
-    `Name: ${fd.get('name')}\nEmail: ${fd.get('email')}\nBusiness: ${fd.get('business')}\n\nMessage:\n${fd.get('message')}`
-  );
-  window.location.href = `mailto:hello@snowbrikdigital.com?subject=${subject}&body=${body}`;
-  document.getElementById('formSuccess').style.display = 'flex';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Sending...';
+
+  try{
+    const res = await fetch(FORM_ENDPOINT, {
+      method:'POST',
+      headers:{ 'Accept':'application/json' },
+      body: fd
+    });
+    if(!res.ok) throw new Error('Request failed');
+    formSuccess.style.display = 'flex';
+    contactForm.reset();
+  }catch(err){
+    formError.style.display = 'block';
+  }finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Send Message';
+  }
 });
 
 /* ---------------- AI assistant widget ---------------- */
